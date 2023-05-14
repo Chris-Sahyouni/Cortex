@@ -1,0 +1,13 @@
+.env
+notes.txt
+
+
+/Server/node_modules/
+/Extension/node_modules/
+/Extension/.vscode-test/
+/Extension/.vscode/
+/Extension/vsc-extension-quickstart.md
+/Extension/test/
+/.vscode/
+/Extension/cortex-0.0.1.vsix
+/todo.txt
