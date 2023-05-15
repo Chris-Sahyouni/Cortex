@@ -7,3 +7,11 @@ vsc-extension-quickstart.md
 **/jsconfig.json
 **/*.map
 **/.eslintrc.json
+Server/
+LICENSE
+CHANGELOG.md
+notes.txt
+todo.txt
+Procfile
+RAEDME.md
+
