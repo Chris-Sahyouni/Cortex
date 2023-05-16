@@ -11,23 +11,68 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:cortex.run"
+    "onStartupFinished"
   ],
   "main": "./extension.js",
   "contributes": {
-    "keybindings": [
-      {
-        "command": "cortex.explain",
-        "key": "ctrl+alt+x",
-        "mac": "cmd+x"
-      }
-    ],
     "commands": [
       {
         "command": "cortex.explain",
-        "title": "Cortex Explain"
+        "title": "Explain"
+      },
+      {
+        "command": "cortex.optimize",
+        "title": "Optimize"
+      },
+      {
+        "command": "cortex.debug",
+        "title": "Debug"
       }
-    ]
+    ],
+    "submenus": [
+      {
+        "id": "cortex.submenu",
+        "label": "Cortex"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "cortex.submenu",
+          "group": "cortex",
+          "when": "editorHasSelection"
+        }
+      ],
+      "cortex.submenu": [
+        {
+          "command": "cortex.debug"
+        },
+        {
+          "command": "cortex.optimize"
+        },
+        {
+          "command": "cortex.explain"
+        }
+      ]
+    },
+    "views": {
+      "cortex-vc": [
+        {
+          "id": "cortex-panel",
+          "name": "Cortex",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "title": "Cortex",
+          "id": "cortex-vc",
+          "icon": ""
+        }
+      ]
+    }
   },
   "repository": {
     "type": "git",

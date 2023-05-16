@@ -1,7 +1,8 @@
 
 const { default: axios } = require('axios');
 
-const apiKey = process.env.OPENAI_API_KEY;
+// const apiKey = process.env.OPENAI_API_KEY;
+const apiKey = "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";
 const axios_openai = axios.create({
     headers: { Authorization: "Bearer " + apiKey }
 });
@@ -19,9 +20,10 @@ app.get("/", (req, res) => {
 const parser = bodyParser.json();
 
 app.post("/", parser, (req, res) => {
-    let om, ul = "";
+    let content, ul, instruction = "";
     try {
-        om = req.body.original_message;
+        content = req.body.original_message;
+        instruction =  req.body.instruction;
         ul = req.body.user_language;
     } catch (error) {
         console.log(error);
@@ -31,8 +33,8 @@ app.post("/", parser, (req, res) => {
         axios_openai.post('https://api.openai.com/v1/chat/completions', {
         "model": "gpt-3.5-turbo",
         "messages": [
-            {"role": "system", "content": `Your job is to concisely explain code and error messages. Answer using ${ul}`},
-            {"role": "user", "content": `Concisely explain this: ${om}`}
+            {"role": "system", "content": `You are a helpful assistant. Answer using ${ul}`},
+            {"role": "user", "content": `${instruction} this: ${content}`}
         ],
         "temperature": .4
     }).then((result) => {
