@@ -1,20 +1,21 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
-const clipboardy = require('node-clipboardy');
 const {default: axios} = require('axios');
 
 
 // https://cortex-vscode-extension.herokuapp.com
 
-async function sendRequest(instruction, content) {
+async function sendRequest(instruction, content, outChannel) {
 	try {
 		const res = await axios.post("http://localhost:3000", {
 			original_message: content,
 			instruction: instruction,
 			user_language: "english"
 		});
-		vscode.window.showInformationMessage(res.data);
+		outChannel.show(true);
+		outChannel.appendLine("----------------------------------------------------------------------");
+		outChannel.appendLine(res.data);
 	} catch (error) {
 		vscode.window.showErrorMessage(error.message);
 	}
@@ -31,41 +32,32 @@ function activate(context) {
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field 4in package.json
 
-	let exp_disposable = vscode.commands.registerCommand('cortex.explain', async function () {
+	const outChannel = vscode.window.createOutputChannel('Cortex', "*");
+	
 
-		
-		// const content = clipboardy.readSync();
-
-		// if (typeof content != 'string') {
-		// 	vscode.window.showErrorMessage('Cortex: data must be a string');
-		// 	return;
-		// }
-
+	let exp_disposable = vscode.commands.registerCommand('cortex.explain', function () {
 		const editor = vscode.window.activeTextEditor;
-		const content = editor.document.getText(editor.selection);
-
-		await sendRequest("Explain", content);
+		const content = editor.document.getText(editor.selection)
+		outChannel.show(true);
+		sendRequest("Explain", content, outChannel);
 	});
 
 	let opt_disposable = vscode.commands.registerCommand('cortex.optimize', function () {
-
 		const editor = vscode.window.activeTextEditor;
 		const content = editor.document.getText(editor.selection);
-
-		sendRequest("Optimize", content);
+		outChannel.show(true);
+		sendRequest("Optimize", content, outChannel);
 	});
 
 	let deb_disposable = vscode.commands.registerCommand('cortex.debug', function () {
-
 		const editor = vscode.window.activeTextEditor;
 		const content = editor.document.getText(editor.selection);
-
-		sendRequest("Debug", content);
-
+		outChannel.show(true);
+		sendRequest("Debug", content, outChannel);
 	});
 
 
-	context.subscriptions.push( exp_disposable, opt_disposable, deb_disposable);
+	context.subscriptions.push(exp_disposable, opt_disposable, deb_disposable);
 }
 
 
