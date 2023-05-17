@@ -2,20 +2,26 @@
 
 A VSCode extension to integrate AI into your workflow.
 
+![Demo](https://user-images.githubusercontent.com/102492467/238822998-1718a821-c55e-40d5-bfba-925e87d22f04.gif)
+
 ## Features
 * Interact with GPT without leaving the IDE
-* Have your code or error message explained by executing a keybinding
+* Three functions: Debug, Optimize, and Explain
 
 
 ## Instructions
-First copy the code or error message you want interpreted to the clipboard. Then use **ctrl+alt+=** (Windows/Linux), **cmd+=** (MacOS), to get the interpretation as an information message.
+1. Highlight the desired section of code/text
+2. Open the context menu
+3. Navigate to the Cortex submenu and select the desired function
 
-
-## Release Notes
-
+## Features Coming Soon
+ - Multi-language support (currently only works in English)
+ - Custom functions
 
 ### 1.0.0
 
-Initial release of Cortex
+- Now has a dedicated output channel
+- Supports new optimized and debug functions
+- No longer uses keyboard shortcuts, instead works through the context menu
 
 

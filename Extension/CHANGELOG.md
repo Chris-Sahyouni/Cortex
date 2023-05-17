@@ -1,9 +1,18 @@
 # Change Log
 
-All notable changes to the "Cortex" extension will be documented in this file.
+## [1.0.0] - 5/16/2023
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+### Added
+ 
+- Optimize function
+- Debug function
+- Dedicated output channel
 
-## [Unreleased]
+### Changed
+
+- Switched from keyboard shortcuts to a submenu upon right click of highlighted text
+- Changed output from information messages to output channel
+
+## [0.0.1]
 
 - Initial release

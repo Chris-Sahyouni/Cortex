@@ -3,12 +3,9 @@
 const vscode = require('vscode');
 const {default: axios} = require('axios');
 
-
-// https://cortex-vscode-extension.herokuapp.com
-
 async function sendRequest(instruction, content, outChannel) {
 	try {
-		const res = await axios.post("http://localhost:3000", {
+		const res = await axios.post(process.env.SERVER_URL, {
 			original_message: content,
 			instruction: instruction,
 			user_language: "english"
