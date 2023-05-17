@@ -1,7 +1,6 @@
 .env
 notes.txt
 
-.gitignore
 /Server/node_modules/
 /Extension/node_modules/
 /Extension/.vscode-test/
