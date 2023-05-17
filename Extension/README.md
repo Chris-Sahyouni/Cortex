@@ -21,7 +21,7 @@ A VSCode extension to integrate AI into your workflow.
 ### 1.0.2
 
 - Now has a dedicated output channel
-- Supports new optimized and debug functions
+- Supports new optimize and debug functions
 - No longer uses keyboard shortcuts, instead works through the context menu
 
 
