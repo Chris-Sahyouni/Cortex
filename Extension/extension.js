@@ -5,7 +5,7 @@ const {default: axios} = require('axios');
 
 async function sendRequest(instruction, content, outChannel) {
 	try {
-		const res = await axios.post(process.env.SERVER_URL, {
+		const res = await axios.post("https://cortex-vscode-extension.herokuapp.com", {
 			original_message: content,
 			instruction: instruction,
 			user_language: "english"

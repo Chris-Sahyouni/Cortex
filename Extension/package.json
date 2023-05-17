@@ -2,8 +2,8 @@
   "name": "cortex",
   "displayName": "Cortex",
   "description": "A VSCode extension to quickly integrate AI into your workflow",
-  "version": "0.0.1",
-  "icon": "icon.png",
+  "version": "1.0.2",
+  "icon": "extension/icon.png",
   "engines": {
     "vscode": "^1.76.0"
   },
