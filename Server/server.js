@@ -1,8 +1,7 @@
 
 const { default: axios } = require('axios');
 
-// const apiKey = process.env.OPENAI_API_KEY;
-const apiKey = "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";
+const apiKey = process.env.OPENAI_API_KEY;
 const axios_openai = axios.create({
     headers: { Authorization: "Bearer " + apiKey }
 });
