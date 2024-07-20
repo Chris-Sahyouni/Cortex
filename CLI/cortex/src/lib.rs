@@ -1,7 +1,7 @@
-use clap::{ArgMatches, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use serde::{Serialize, Deserialize};
-use nanoid::{alphabet, nanoid};
-use std::path::{Path, PathBuf};
+use nanoid::nanoid;
+use std::path::PathBuf;
 
 
 fn rand_id() -> String {
@@ -52,7 +52,7 @@ pub struct CortexArgs {
     #[arg(short, long, default_value = default_path(".").into_os_string())]
     pub out: PathBuf,
 
-    /// An upper bound on how long this job should run for
+    /// An upper bound on how long this job should run for. Can be specified as "x minutes" or "x hours"
     #[arg(short, long, default_value = "none")]
     pub max_runtime: String
 }
