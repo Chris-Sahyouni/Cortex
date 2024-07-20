@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.5.7", features = ["derive"] }
+clap = { version = "4.5.7", features = ["derive", "string"] }
 nanoid = "0.4.0"
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.120"
@@ -13,3 +13,7 @@ serde_json = "1.0.120"
 [[bin]]
 name = "cli"
 path = "src/cli/main.rs"
+
+[[bin]]
+name = "server"
+path = "src/server/main.rs"
