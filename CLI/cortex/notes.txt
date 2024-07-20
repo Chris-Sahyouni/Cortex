@@ -1,0 +1,1 @@
+trivy or claire can scan a docker image for vulnerabilities / security issues
