@@ -13,7 +13,7 @@ fn default_path(path: &str) -> PathBuf {
     PathBuf::from(String::from(path))
 }
 
-#[derive(Debug, Parser, Serialize, Deserialize)]
+#[derive(Debug, Parser, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[command(author, version, about)]
 pub struct CortexArgs {
 
@@ -58,7 +58,7 @@ pub struct CortexArgs {
 }
 
 
-#[derive(Subcommand, Debug, Clone, Serialize, Deserialize)]
+#[derive(Subcommand, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CortexCommands {
     Run,
     /// Will check to see if the job can be run without actually running it

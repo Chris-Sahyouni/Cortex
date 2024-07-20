@@ -67,10 +67,14 @@ fn updateJobState(job_id: &String, new_state: JobState) {
 
 #[cfg(test)]
 mod tests {
+    use std::borrow::Borrow;
+
     use super::*;
     use lazy_static::lazy_static;
+    use serde::ser::SerializeStructVariant;
 
     lazy_static! {
+        #[derive(Debug)]
         static ref TEST_ARGS: CortexArgs = CortexArgs {
             cmd: CortexCommands::Run,
             id: String::from("test_job"),
@@ -87,8 +91,11 @@ mod tests {
 
 
     #[test]
-    fn commands_take_correct_path() {
-
+    fn data_preserved_after_serialization() {
+        let copy_of_args = TEST_ARGS.clone();
+        let serialized_args = serde_json::to_string(&copy_of_args).unwrap();
+        let deserialized_args: CortexArgs = serde_json::from_str(&serialized_args).unwrap();
+        assert_eq!(deserialized_args, TEST_ARGS.clone());
     }
 }
 
