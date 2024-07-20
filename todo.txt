@@ -1,3 +1,0 @@
- - a thread should be launched for each host running the program
- - an HMAC should be computed at some point (of the docker image?) to ensure a malicious host does not alter the image
- 

@@ -1,8 +1,0 @@
-trivy or claire can scan a docker image for vulnerabilities / security issues
-
-unwrap() can panic so try to swap it out with pattern matching and handle the Err case where you can
-
-can always make the cli more robust
- - expressions for gpu make like "not amd" or "nvidia, not intel" etc
- - can use "values" in clap to define a set of allowed values for an argument
- - PathBuf is the mutable Path, use if necessary
