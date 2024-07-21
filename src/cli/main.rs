@@ -18,9 +18,9 @@ fn main() {
                 process::exit(1);
             }
         }
-        CortexCommands::Test => {
+        CortexCommands::Check => {
             if let Err(e) = test(args) {
-                println!("Error from test: {}", e);
+                println!("Error from check: {}", e);
                 process::exit(1);
             }
         }
@@ -38,12 +38,18 @@ fn run(args: CortexArgs) -> Result<(), Box<dyn Error>> {
 
     let mut stream = TcpStream::connect(SERVER_IP_ADDR)?;
     let serialized_args = serde_json::to_string(&args).unwrap();
-    // the dockerfile will need to be sent over too, not just the args
-    stream.write_all(serialized_args.as_bytes()).unwrap();
+
+    // prepend the size of the args to the string
+    // let size_prefixed_args: String = serialized_args.len().to_string().push_str(serialized_args.as_str());
+    // stream.write_all(size_prefixed_args.as_bytes()).unwrap();
 
     updateJobState(&args.id, JobState::PREPARING);
 
     Ok(())
+}
+
+fn send_args(args: CortexArgs) {
+    ()
 }
 
 
@@ -67,11 +73,8 @@ fn updateJobState(job_id: &String, new_state: JobState) {
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::Borrow;
-
     use super::*;
     use lazy_static::lazy_static;
-    use serde::ser::SerializeStructVariant;
 
     lazy_static! {
         #[derive(Debug)]
@@ -94,6 +97,7 @@ mod tests {
     fn data_preserved_after_serialization() {
         let copy_of_args = TEST_ARGS.clone();
         let serialized_args = serde_json::to_string(&copy_of_args).unwrap();
+        println!("{}", serialized_args);
         let deserialized_args: CortexArgs = serde_json::from_str(&serialized_args).unwrap();
         assert_eq!(deserialized_args, TEST_ARGS.clone());
     }

@@ -62,7 +62,7 @@ pub struct CortexArgs {
 pub enum CortexCommands {
     Run,
     /// Will check to see if the job can be run without actually running it
-    Test,
+    Check,
     /// List currently running cortex jobs
     Ps
 }
