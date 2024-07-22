@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use serde::{Serialize, Deserialize};
 use nanoid::nanoid;
 use std::path::PathBuf;
@@ -13,21 +13,50 @@ fn default_path(path: &str) -> PathBuf {
     PathBuf::from(String::from(path))
 }
 
-#[derive(Debug, Parser, Serialize, Deserialize, Clone, PartialEq, Eq)]
-#[command(author, version, about)]
+#[derive(Debug, Parser)]
+#[command(author, version, about, name = "cortex")]
+pub struct AllArgs {
+
+    #[command(flatten)]
+    pub cortex_args: CortexArgs,
+
+    #[command(flatten)]
+    pub path_args: PathArgs
+}
+
+#[derive(Debug, Parser, Clone, Serialize, Deserialize)]
 pub struct CortexArgs {
 
     #[command(subcommand)]
     pub cmd: CortexCommands,
 
     /// The name for or id of the job. Defaults to a random value
-    #[arg(default_value = rand_id())]
+    #[arg(long, default_value = rand_id(), hide_default_value = true)]
     pub id: String,
 
     /// The number of hosts for the job to run on
     #[arg(short, long)]
     pub redundancy: i32,
 
+    /// The number of GPUS on the host. A range is also accepted
+    #[arg(short, long, default_value = "1")]
+    pub gpus: String,
+
+    /// GPU make, i.e Nvidia.
+    #[arg(short, long, default_value = "any", group = "gpu_arg")]
+    pub make: String,
+
+    /// GPU model. The "make" argument is not necessary if "model" is specified
+    #[arg(long, default_value = "any", group = "gpu_arg")]
+    pub model: String,
+
+    /// An upper bound on how long this job should run for. Can be specified as "x minutes" or "x hours"
+    #[arg(long, default_value = "none")]
+    pub max_runtime: String
+}
+
+#[derive(Parser, Debug)]
+pub struct PathArgs {
     /// The path to the dockerfile
     #[arg(short, long, default_value = default_path(".").into_os_string())]
     pub container: PathBuf,
@@ -36,25 +65,9 @@ pub struct CortexArgs {
     #[arg(short, long)]
     pub volume: Option<PathBuf>,
 
-    /// The number of GPUS on the host. A range is also accepted
-    #[arg(short, long, default_value = "1")]
-    pub gpus: String,
-
-    /// GPU make, i.e Nvidia.
-    #[arg(short, long, default_value = "any")]
-    pub make: String,
-
-    /// GPU model. The "make" argument is not necessary if "model" is specified
-    #[arg(long, default_value = "any")]
-    pub model: String,
-
     /// The path to where you would like the results of the job to be placed
     #[arg(short, long, default_value = default_path(".").into_os_string())]
     pub out: PathBuf,
-
-    /// An upper bound on how long this job should run for. Can be specified as "x minutes" or "x hours"
-    #[arg(short, long, default_value = "none")]
-    pub max_runtime: String
 }
 
 
