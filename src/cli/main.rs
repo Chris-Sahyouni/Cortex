@@ -1,7 +1,6 @@
 use std::{error::Error, net::TcpStream, io::prelude::*, path::{Path, PathBuf}};
 use std::process;
 use clap::Parser;
-
 use cortex::{AllArgs, CortexArgs, CortexCommands, JobState, PathArgs};
 
 const SERVER_IP_ADDR: &str = "127.0.0.1:4444";
@@ -36,22 +35,24 @@ fn main() {
 
 fn run(args: CortexArgs, paths: PathArgs) -> Result<(), Box<dyn Error>> {
 
-    updateJobState(&args.id, JobState::INIT);
+    update_job_state(&args.id, JobState::INIT);
 
     let mut stream = TcpStream::connect(SERVER_IP_ADDR)?;
-    let serialized_args = serde_json::to_string(&args).unwrap();
 
     // prepend the size of the args to the string
-    // let size_prefixed_args: String = serialized_args.len().to_string().push_str(serialized_args.as_str());
-    // stream.write_all(size_prefixed_args.as_bytes()).unwrap();
+    stream.write_all(serialize(&args).as_bytes()).unwrap();
 
-    updateJobState(&args.id, JobState::PREPARING);
+
+    update_job_state(&args.id, JobState::PREPARING);
 
     Ok(())
 }
 
-fn send_args(args: CortexArgs) {
-    ()
+
+fn serialize(args: &CortexArgs) -> String {
+    let mut serialized_args = serde_json::to_string(&args).unwrap();
+    serialized_args.push('\n');
+    serialized_args
 }
 
 
@@ -65,7 +66,7 @@ fn ps() {
 }
 
 
-fn updateJobState(job_id: &String, new_state: JobState) {
+fn update_job_state(job_id: &String, new_state: JobState) {
     ()
 }
 
