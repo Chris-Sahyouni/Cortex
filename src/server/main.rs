@@ -1,15 +1,24 @@
-use std::{net::{TcpListener, TcpStream}, io::{prelude::*, BufReader}};
+use std::{net::{TcpListener, TcpStream}, io::{prelude::*, BufReader}, sync::mpsc::channel};
 use cortex::{CortexArgs, CortexCommands, JobState};
+use threadpool::ThreadPool;
 
 const SERVER_IP_ADDR: &str = "127.0.0.1:4444";
+const NUM_WORKERS: usize = 2;
+
+
 
 fn main() {
-    // use a threadpool to handle the connections
     let listener = TcpListener::bind(SERVER_IP_ADDR).unwrap();
+    let threadpool = ThreadPool::new(NUM_WORKERS);
+    // let (sender, receiver) = channel();
+
+
     for stream in listener.incoming() {
         // connection attempt may not be successful so we pattern match it to ensure its Ok
-        if let Ok(_stream) = stream {
-            handle_connection(_stream);
+        if let Ok(stream) = stream {
+            threadpool.execute(move || {
+                handle_connection(stream);
+            });
         }
     }
 }
