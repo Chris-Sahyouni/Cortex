@@ -1,0 +1,8 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: cortex_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./seed.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
