@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use serde::{Serialize, Deserialize};
 use nanoid::nanoid;
 use std::path::PathBuf;
@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 fn rand_id() -> String {
     let alphabet: [char; 16] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
-    nanoid!(8, &alphabet)
+    nanoid!(16, &alphabet)
 }
 
 fn default_path(path: &str) -> PathBuf {
@@ -30,9 +30,12 @@ pub struct CortexArgs {
     #[command(subcommand)]
     pub cmd: CortexCommands,
 
-    /// The name for or id of the job. Defaults to a random value
-    #[arg(long, default_value = rand_id(), hide_default_value = true)]
+    #[arg(default_value = rand_id(), hide_default_value = true, hide = true)]
     pub id: String,
+
+    #[arg(long, short, default_value = "", hide_default_value = true)]
+    /// An optional name for the job
+    pub name: String,
 
     /// The number of hosts for the job to run on
     #[arg(short, long)]
@@ -43,15 +46,15 @@ pub struct CortexArgs {
     pub gpus: String,
 
     /// GPU make, i.e Nvidia.
-    #[arg(short, long, default_value = "any", group = "gpu_arg")]
+    #[arg(short, long, default_value = "ANY", group = "gpu_arg")]
     pub make: String,
 
-    /// GPU model. The "make" argument is not necessary if "model" is specified
-    #[arg(long, default_value = "any", group = "gpu_arg")]
-    pub model: String,
+    // /// GPU model. The "make" argument is not necessary if "model" is specified
+    // #[arg(long, default_value = "any", group = "gpu_arg")]
+    // pub model: String,
 
     /// An upper bound on how long this job should run for. Can be specified as "x minutes" or "x hours"
-    #[arg(long, default_value = "none")]
+    #[arg(long, default_value = "NONE")]
     pub max_runtime: String
 }
 
