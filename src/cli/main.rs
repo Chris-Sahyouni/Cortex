@@ -3,12 +3,11 @@ use std::process;
 use clap::Parser;
 use cortex::{AllArgs, CortexArgs, CortexCommands, JobState, PathArgs};
 
-const SERVER_IP_ADDR: &str = "127.0.0.1:4444";
+const SERVER_IP_ADDR: &str = "127.0.0.1:32503";
 
 
 fn main() {
 
-    // let args: CortexArgs, paths: PathArgs = AllArgs::parse();
     let AllArgs {cortex_args, path_args} = AllArgs::parse();
 
 
@@ -93,7 +92,6 @@ mod tests {
     //         out: PathBuf::from("../../test_resources/test_outputs"),
     //         container: PathBuf::from(String::from(".")),
     //         volume: Some(PathBuf::from(String::from("../../test_resources/test_volume"))),
-            
     //     };
     // }
 

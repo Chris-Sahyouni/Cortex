@@ -39,7 +39,7 @@ pub struct CortexArgs {
 
     /// The number of hosts for the job to run on
     #[arg(short, long)]
-    pub redundancy: i32,
+    pub redundancy: u32,
 
     /// The number of GPUS on the host. A range is also accepted
     #[arg(short, long, default_value = "1")]
