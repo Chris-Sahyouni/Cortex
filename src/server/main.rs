@@ -24,7 +24,7 @@ async fn main() {
 
     let db_conn = db_connection().await.unwrap();
 
-    let mut working_host_ids = Arc::new(Mutex::new(CuckooFilter::new()));
+    let working_host_ids = Arc::new(Mutex::new(CuckooFilter::new()));
 
     loop {
 
@@ -57,7 +57,8 @@ async fn handle_connection(mut stream: TcpStream, db_conn: &Client, working_host
     // query the db
     let mut hosts_cursor = query_hosts(args.clone(), &db_conn).await?;
 
-    if let Ok(committed_hosts) = two_phase_commit(&mut hosts_cursor, args.redundancy.clone(), args.id.clone(), db_conn, working_host_ids.clone()).await {
+    if let Ok(committed_hosts) = two_phase_commit(&mut hosts_cursor, args.redundancy.clone(), args.id.clone(), &db_conn, working_host_ids.clone()).await {
+        // alter_batch_state(&committed_hosts, HostState::Working(args.id), &db_conn).await;
 
     }
 
@@ -69,6 +70,13 @@ async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: St
     let committed_hosts: Arc<Mutex<Vec<Host>>> = Arc::new(Mutex::new(Vec::new()));
 
     while let Some(Ok(host)) = cursor.next().await {
+
+        {
+            let num_committed_hosts = committed_hosts.lock().await.len() as u32;
+            if num_committed_hosts >= redundancy {
+                break;
+            }
+        }
 
         let working_host_ids = working_host_ids.clone();
         { // this block should fix the race condition where a host was "available" in the db but committed to another job first
@@ -112,7 +120,6 @@ async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: St
                 working_host_ids.delete(&host_id);
             }
         });
-
     }
 
     // will need a mechanism here for if we didn't reach redundancy
@@ -144,7 +151,7 @@ async fn query_hosts(args: CortexArgs, db_conn: &Client) -> Result<Cursor<Host>,
         filter = doc! {
         "gpus": doc! { "$gte": args.gpus},
         "make": args.make.to_uppercase(),
-        "available": true
+        "state": HostState::Available
     };
     }
 
@@ -153,12 +160,14 @@ async fn query_hosts(args: CortexArgs, db_conn: &Client) -> Result<Cursor<Host>,
     Ok(hosts_cursor)
 }
 
-// alters all hosts working on/committed to job_id to new_state
-async fn alter_batch_state(host_ids: Vec<String>, new_state: HostState, db_conn: &Client) {
-    // let hosts_collection: Collection<Host> = db_conn.database("hosts_db").collection("hosts");
-    // cursor.for_each_concurrent(async move {
-    //     ()
-    // });
+// alters all given hosts to new_state
+async fn alter_batch_state(host_ids: &Vec<Host>, new_state: HostState, db_conn: &Client) {
+    let hosts_collection: Collection<Host> = db_conn.database("hosts_db").collection("hosts");
+    for host in host_ids {
+        let query = doc! {"id": host.id.clone()};
+        let update = doc! {"state": new_state.clone()};
+        let _res = hosts_collection.update_one(query, update).await; // should add error handling here if update_one fails
+    }
 }
 
 /* -------------------------------------------------------------------------- */

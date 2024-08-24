@@ -12,17 +12,19 @@ pub struct Host {
     pub ip: IpAddr,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HostState {
-    Available, Committing(String), Working(String)
+    Available,
+    // Committing(String), in reality this state also exists, but it is effectively no different than Working
+    Working(String)
 }
 
 impl From<HostState> for Bson {
     fn from(value: HostState) -> Self {
         match value {
             HostState::Available => Bson::Null,
-            HostState::Committing(job_id) => Bson::String(String::from("Committing:") + job_id.as_str()),
-            HostState::Working(job_id) => Bson::String(String::from("Working:") + job_id.as_str()),
+            // HostState::Committing(job_id) => Bson::String(String::from("Committing:") + job_id.as_str()),
+            HostState::Working(job_id) => Bson::String(job_id),
         }
     }
 }
