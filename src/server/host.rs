@@ -9,20 +9,26 @@ pub struct Host {
     pub model: String,
     pub make: String,
     pub state: HostState,
-    pub ip: IpAddr
+    pub ip: IpAddr,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum HostState {
-    Available, Committing, Working
+    Available, Committing(String), Working(String)
 }
 
 impl From<HostState> for Bson {
     fn from(value: HostState) -> Self {
         match value {
-            HostState::Available => Bson::Int32(0),
-            HostState::Committing => Bson::Int32(1),
-            HostState::Working => Bson::Int32(2),
+            HostState::Available => Bson::Null,
+            HostState::Committing(job_id) => Bson::String(String::from("Committing:") + job_id.as_str()),
+            HostState::Working(job_id) => Bson::String(String::from("Working:") + job_id.as_str()),
         }
     }
 }
+
+// impl From<Bson> for HostState {
+//     fn from(value: Bson) -> Self {
+//      WILL PROBABLY NEED THIS AT SOME POINT
+//     }
+// }
