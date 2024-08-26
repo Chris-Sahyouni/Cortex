@@ -57,6 +57,7 @@ async fn handle_connection(mut stream: TcpStream, db_conn: &Client, working_host
     // query the db
     let mut hosts_cursor = query_hosts(args.clone(), &db_conn).await?;
 
+    // if two phase commit succeeds, alter the committed host states
     if let Ok(committed_hosts) = two_phase_commit(&mut hosts_cursor, args.redundancy.clone(), args.id.clone(), &db_conn, working_host_ids.clone()).await {
         alter_batch_state(&committed_hosts, HostState::Working(args.id), &db_conn).await;
 
@@ -91,8 +92,8 @@ async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: St
         }
 
         // make copies of anything that will be needed after being moved into the future
-        let commit_req = String::from("Commit-Request:") + job_id.as_str();
-        let committed_res = String::from("Committed:") + job_id.as_str();
+        let commit_req = String::from("Commit-Request:") + job_id.as_str() + "\n";
+        let committed_res = String::from("Committed:") + job_id.as_str() + "\n";
         let committed_hosts = Arc::clone(&committed_hosts);
         let host_id = host.id.clone();
 
