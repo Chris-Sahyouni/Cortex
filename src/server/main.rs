@@ -46,7 +46,7 @@ async fn main() {
 }
 
 
-async fn handle_connection(mut stream: TcpStream, db_conn: &Client, working_host_ids: Arc<Mutex<CuckooFilter<DefaultHasher>>>) -> Result<(), Box<dyn Error>> {
+async fn handle_connection(mut stream: TcpStream, db_conn: &Client, working_host_ids: Arc<Mutex<CuckooFilter<DefaultHasher>>>) -> Result<(), Box<dyn Error + Send + Sync>> {
 
     // serialize the bytes from the stream into a CortexArgs
     let mut buf_reader = BufReader::new(&mut stream);
@@ -58,14 +58,14 @@ async fn handle_connection(mut stream: TcpStream, db_conn: &Client, working_host
     let mut hosts_cursor = query_hosts(args.clone(), &db_conn).await?;
 
     if let Ok(committed_hosts) = two_phase_commit(&mut hosts_cursor, args.redundancy.clone(), args.id.clone(), &db_conn, working_host_ids.clone()).await {
-        // alter_batch_state(&committed_hosts, HostState::Working(args.id), &db_conn).await;
+        alter_batch_state(&committed_hosts, HostState::Working(args.id), &db_conn).await;
 
     }
 
     Ok(())
 }
 
-async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: String, db_conn: &Client, working_host_ids: Arc<Mutex<CuckooFilter<DefaultHasher>>>) -> Result<Vec<Host>, Box<dyn Error>> {
+async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: String, db_conn: &Client, working_host_ids: Arc<Mutex<CuckooFilter<DefaultHasher>>>) -> Result<Vec<Host>, Box<dyn Error + Send + Sync>> {
 
     let committed_hosts: Arc<Mutex<Vec<Host>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -131,7 +131,7 @@ async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: St
 
 /* ------------------------------- DB RELATED ------------------------------- */
 
-async fn db_connection() -> Result<Client, Box<dyn Error>> {
+async fn db_connection() -> Result<Client, Box<dyn Error + Send + Sync>> {
     let mut client_options = ClientOptions::parse(DB_CONN_STRING).await?;
     client_options.app_name = Some(String::from("Cortex"));
     let client = Client::with_options(client_options)?;
@@ -139,7 +139,7 @@ async fn db_connection() -> Result<Client, Box<dyn Error>> {
 }
 
 
-async fn query_hosts(args: CortexArgs, db_conn: &Client) -> Result<Cursor<Host>, Box<dyn Error>> {
+async fn query_hosts(args: CortexArgs, db_conn: &Client) -> Result<Cursor<Host>, Box<dyn Error + Send + Sync>> {
     let hosts: Collection<Host> = db_conn.database("hosts_db").collection("hosts");
     let filter: Document;
     if args.make == "ANY" {
