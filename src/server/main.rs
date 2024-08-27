@@ -58,15 +58,22 @@ async fn handle_connection(mut stream: TcpStream, db_conn: &Client, working_host
     let mut hosts_cursor = query_hosts(args.clone(), &db_conn).await?;
 
     // if two phase commit succeeds, alter the committed host states
-    if let Ok(committed_hosts) = two_phase_commit(&mut hosts_cursor, args.redundancy.clone(), args.id.clone(), &db_conn, working_host_ids.clone()).await {
+    if let Ok((committed_hosts, fully_redundant)) = two_phase_commit(&mut hosts_cursor, args.redundancy.clone(), args.id.clone(), working_host_ids.clone()).await {
+
+        if !fully_redundant {
+            handle_not_enough_hosts(stream, &args, committed_hosts.len()).await;
+        }
+
         alter_batch_state(&committed_hosts, HostState::Working(args.id), &db_conn).await;
+
+        // ask for the dockerfile and volume
 
     }
 
     Ok(())
 }
 
-async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: String, db_conn: &Client, working_host_ids: Arc<Mutex<CuckooFilter<DefaultHasher>>>) -> Result<Vec<Host>, Box<dyn Error + Send + Sync>> {
+async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: String, working_host_ids: Arc<Mutex<CuckooFilter<DefaultHasher>>>) -> Result<(Vec<Host>, bool), Box<dyn Error + Send + Sync>> {
 
     let committed_hosts: Arc<Mutex<Vec<Host>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -123,12 +130,21 @@ async fn two_phase_commit(cursor: &mut Cursor<Host>, redundancy: u32, job_id: St
         });
     }
 
-    // will need a mechanism here for if we didn't reach redundancy
-
     let mut committed_hosts = committed_hosts.lock().await;
-    Ok(take(&mut *committed_hosts))
+    let is_fully_redundant = committed_hosts.len() as u32 >= redundancy;
+    Ok((take(&mut *committed_hosts), is_fully_redundant))
 }
 
+async fn handle_not_enough_hosts(mut stream: TcpStream, args: &CortexArgs, hosts_found: usize) {
+    let msg = String::from("Couldn't find requested number of hosts:") + args.id.as_str() + ":" + hosts_found.to_string().as_str() + "\n";
+    if let Ok(_) = stream.write_all(msg.as_bytes()).await {
+        let mut buf_reader = BufReader::new(&mut stream);
+        let mut response = String::new();
+        if let Ok(_bytes_read) = buf_reader.read_line(&mut response).await {
+            
+        }
+    }
+}
 
 /* ------------------------------- DB RELATED ------------------------------- */
 
