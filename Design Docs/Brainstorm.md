@@ -72,11 +72,12 @@ Messages should be formatted as basically JSON, YAML, or some other equivalent f
 Even though I said right above this that everything would be piggybacked, I am wondering if this isn't the best idea. It would definitely make everything easier to reason about, but it could seriously slow down the entire network because then everything is bounded by the pace of heartbeats. One way to get around this could be to just have really fast heartbeating. Another way could be to piggyback everything except event triggering since that is the critical piece.
 
 Probably the best way to go about this is to piggyback everything except for triggers.
+Actually new idea, separate things into two categories basically, latency-sensitive and non latency-sensitive then piggyback all non-latency-sensitive messages
 
 ## Security
 For this we'll just go through all the different scenarios I can think of and try to address them one by one.
 
-(brief not that in general all communication should be done over TLS)
+(brief not that in general all communication should be done over TLS, also it would not be a bad idea for every node to have a certificate)
 
 ### 1. Malicious user tries to attack contributor
 If our virtualization doesn't solve this on its own, we need different virtualization. This one should be pretty easy to handle.

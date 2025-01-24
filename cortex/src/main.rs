@@ -1,21 +1,42 @@
-use std::{error::Error, process::{self}};
-use tokio;
-use local_ip_address::{local_ip};
+/* MAIN.RS SHOULD BE RESPONSIBLE PRIMARILY FOR JOINING THE NETWORK */
+use std::{error::Error, net::SocketAddr, process::{self}};
+use tokio::{self, io::AsyncWriteExt, net::TcpStream};
+use local_ip_address::local_ip;
 use sha2::{Digest, Sha256};
-use rand::{Rng};
+use rand::Rng;
+use serde::{self, Serialize};
 
-const BATMAN_QUOTES: [&str; 3] = [
+mod cnp;
+mod bootstrap;
+/* ORDER OF EVENTS
+    1. Cortex process starts up
+      - check for cached successor/predecessor on disk to avoid contacting introducer
+      - if found, contact directly, else contact introducer
+    2. Get added to the network once successor is determined
+      - ask successor for its successors vector, take all but last element
+      - predecessor should be found in stabilize
+      - begin heartbeating and stabilizing
+    3. Initialize finger table
+    4. Acquire keys
+    5. Good to go
+*/
+
+
+const BATMAN_QUOTES: [&str; 4] = [
     "The shadows betray you because they belong to me",
     "The training is nothing. The will is everything",
-    "Victory has defeated you"
+    "Victory has defeated you",
+    "Save yourself. You don't owe these people anymore. You've given them everything. \n Not Everything... Not yet"
 ];
+
+// const NUM_SUCCESSORS: u8 = 3;
 
 #[tokio::main]
 async fn main() {
 
     // Drop batman quote to increase happiness
     let mut rng = rand::thread_rng();
-    let quote_idx = rng.gen_range(0..=2);
+    let quote_idx = rng.gen_range(0..=3);
     println!("{}", BATMAN_QUOTES[quote_idx]);
 
     // Get DHT Id
@@ -33,11 +54,19 @@ async fn main() {
     let introducer_freq = 12; // this determines what fraction of all nodes are introducers calculated by 1 / introducer_freq
     if dht_id % introducer_freq == 0 {
         // this node IS an introducer, handle accordingly
+        // note that this section should be moved to after this node is fully a part of the network
         println!("This node is an introducer");
     }
 
     println!("My DHT Id: {}", dht_id);
 
+    /* Here for now we will assume that there is a known other node for this one to contact.
+       Later we can implement the logic for contacting an introducer and actually getting this information. */
+
+    /* Joining the network will also be left until later, it will be easier to implement once the behavior
+       of the nodes in the network is defined */
+
+    // piggybacking should not happen until the node is in the network, too complicated otherwise
 
 }
 
