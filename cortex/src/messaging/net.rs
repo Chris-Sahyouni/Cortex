@@ -1,9 +1,9 @@
+/* This file defines messaging done over the network between nodes */
 
-use cortex::CortexNode;
+use cortex::{CortexNode, CortexCommand};
 use serde::{Serialize, Deserialize};
-use std::fmt::Debug;
-
-
+use tokio::net::{TcpListener, TcpStream};
+use std::{fmt::Debug, net::SocketAddr, vec};
 /* ------------------------- Cortex Network Protocol ------------------------ */
 /*
     CortexMessage represents the full message to be sent to another node. It is built by the dispatcher which will
@@ -17,9 +17,7 @@ use std::fmt::Debug;
 */
 
 
-
-
-
+const CORTEX_PORT: u16 = 32503;
 
 
 
@@ -28,7 +26,6 @@ use std::fmt::Debug;
 // the full message to be sent
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CortexMessage {
-    pub hearbeat: bool,
     pub queries: Vec<MessageQuery>,
     pub responses: Vec<MessageResponse>
 }
@@ -45,41 +42,33 @@ pub struct MessageResponse {
     pub res: u8 // once again u8 is just a place holder
 }
 
-
-#[derive(Debug)]
-pub struct DispatcherQuery {
-    pub query_id: u32,
-    // src: String, // src shouldn't actually be necessary, the thread is the src
-    pub dst: CortexNode,
-    pub cmd: CortexCommand
-}
-
-#[derive(Debug)]
-pub struct DispatcherResponse {
-    pub query_id: u32,
-    pub res: u8 // this type should probably be a trait later, u8 is just a placeholder for now
-}
-
-// all possible commands enumerated
-#[derive(Serialize, Deserialize, Debug)]
-pub enum CortexCommand {
-    SendSuccessors
-}
+/* ----------------------------- implementations ---------------------------- */
 
 impl CortexMessage {
 
     // builder pattern might be better here
 
-    pub fn new(queries: Vec<MessageQuery>, responses: Vec<MessageResponse>) -> CortexMessage {
+    pub fn new() -> CortexMessage {
         CortexMessage {
-            hearbeat: false,
-            queries: queries,
-            responses: responses
+            queries: vec![],
+            responses: vec![]
         }
     }
 
-    pub fn send_message(&self) {
+    pub fn send(&self, dst: CortexNode) {
         todo!()
+    }
+
+    pub fn multicast(&self, dsts: Vec<CortexNode>) {
+        todo!()
+    }
+
+    pub fn add_query(&mut self, query: MessageQuery) {
+        self.queries.push(query);
+    }
+
+    pub fn add_response(&mut self, res: MessageResponse) {
+        self.responses.push(res);
     }
 
 }

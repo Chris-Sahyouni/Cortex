@@ -4,3 +4,5 @@ notes.txt
 # Added by cargo
 
 /target
+
+/test_resources

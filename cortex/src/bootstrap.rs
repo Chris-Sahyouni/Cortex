@@ -1,7 +1,9 @@
 use std::error::Error;
-use cortex::CortexNode;
+use cortex::{CortexNode, CortexCommand};
 use tokio::{io::AsyncWriteExt, net::TcpStream};
-use crate::cnp::{CortexCommand, CortexMessage, MessageQuery};
+
+use crate::messaging::net::{CortexMessage, MessageQuery, MessageResponse};
+// use messaging::net::{CortexMessage, MessageQuery};
 
 
 
@@ -17,7 +19,7 @@ async fn join_network(initial_successor: CortexNode) -> Result<(Vec<CortexNode>,
     let msg: CortexMessage = CortexMessage::new(vec![MessageQuery {query_id: 1, cmd: CortexCommand::SendSuccessors}], vec![]);
 
     stream.write_all(bincode::serialize(&msg)?.as_slice()).await?;
-    
+
 
     todo!()
 }
