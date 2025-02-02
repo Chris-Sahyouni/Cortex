@@ -22,34 +22,45 @@ const CORTEX_PORT: u16 = 32503;
 
 
 // for performance you could create your own serializer and deserializer
+// you actually will probably have to do this so that the triggering libraries can serialize messages following this protocol
 
 // the full message to be sent
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CortexMessage {
-    pub queries: Vec<MessageQuery>,
-    pub responses: Vec<MessageResponse>
+pub struct NetworkMessage {
+    pub queries: Vec<NetworkQuery>,
+    pub responses: Vec<NetworkResponse>
 }
 
+// you really need to change the names of all these structs
 #[derive(Serialize, Deserialize, Debug)]
-pub struct MessageQuery {
+pub struct NetworkQuery {
     pub query_id: u32,
-    pub cmd: CortexCommand
+    pub cmd: CortexCommand,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct MessageResponse {
+pub struct NetworkResponse {
     pub query_id: u32,
     pub res: u8 // once again u8 is just a place holder
 }
 
 /* ----------------------------- implementations ---------------------------- */
 
-impl CortexMessage {
+impl NetworkQuery {
+    pub fn new(query_id: u32, cmd: CortexCommand) -> NetworkQuery {
+        NetworkQuery {
+            query_id: query_id,
+            cmd: cmd
+        }
+    }
+}
+
+impl NetworkMessage {
 
     // builder pattern might be better here
 
-    pub fn new() -> CortexMessage {
-        CortexMessage {
+    pub fn new() -> NetworkMessage {
+        NetworkMessage {
             queries: vec![],
             responses: vec![]
         }
@@ -63,11 +74,11 @@ impl CortexMessage {
         todo!()
     }
 
-    pub fn add_query(&mut self, query: MessageQuery) {
+    pub fn add_query(&mut self, query: NetworkQuery) {
         self.queries.push(query);
     }
 
-    pub fn add_response(&mut self, res: MessageResponse) {
+    pub fn add_response(&mut self, res: NetworkResponse) {
         self.responses.push(res);
     }
 

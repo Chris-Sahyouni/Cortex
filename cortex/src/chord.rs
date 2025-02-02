@@ -1,6 +1,6 @@
 use tokio::sync::{mpsc::Sender, oneshot::Receiver};
 
-use crate::dispatch::{DispatcherQuery, DispatcherResponse};
+use crate::dispatch::{LocalMessage, LocalQuery, LocalResponse};
 
 
 /* ------------------------------ Finger Table ------------------------------ */
@@ -28,7 +28,7 @@ impl FingerTable {
 }
 
 // this cna be used as a prototype for the other worker threads loops
-pub fn chord_manager_loop(send_query_channel: Sender<DispatcherQuery>) {
+pub fn chord_manager_loop(to_dispatcher_channel: Sender<LocalMessage>) {
     // create oneshot thread every time to be sent along with the DispatcherQueries for main to send response on
     todo!()
 }

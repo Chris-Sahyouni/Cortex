@@ -2,7 +2,7 @@ use std::error::Error;
 use cortex::{CortexNode, CortexCommand};
 use tokio::{io::AsyncWriteExt, net::TcpStream};
 
-use crate::messaging::net::{CortexMessage, MessageQuery, MessageResponse};
+use crate::messaging::net::{NetworkMessage, NetworkQuery, NetworkResponse};
 // use messaging::net::{CortexMessage, MessageQuery};
 
 
@@ -16,9 +16,9 @@ async fn join_network(initial_successor: CortexNode) -> Result<(Vec<CortexNode>,
     // if possible, replace this with TLS later
     let mut stream = TcpStream::connect(initial_successor.socket).await?;
 
-    let msg: CortexMessage = CortexMessage::new(vec![MessageQuery {query_id: 1, cmd: CortexCommand::SendSuccessors}], vec![]);
+    // let msg: CortexMessage = CortexMessage::new();
 
-    stream.write_all(bincode::serialize(&msg)?.as_slice()).await?;
+    // stream.write_all(bincode::serialize(&msg)?.as_slice()).await?;
 
 
     todo!()

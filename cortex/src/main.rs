@@ -1,16 +1,16 @@
-use std::{process::{self}, vec};
+use std::{collections::HashMap, net::SocketAddr, process::{self}, vec};
 use tokio::{self, sync::{mpsc, oneshot}};
 use rand::Rng;
-use cortex::{get_dht_id, CortexCommand, CortexNode};
+use cortex::{get_dht_id, CortexCommand, CortexNode, DestinationType};
 
 mod messaging;
-use messaging::{net::{CortexMessage, MessageQuery, MessageResponse}};
+use messaging::net::{NetworkMessage, NetworkQuery};
 
 
 mod bootstrap;
 
 mod dispatch;
-use dispatch::{QueryTable, DispatcherQuery, DispatcherResponse};
+use dispatch::{parse_network_messages, parse_worker_thread_messages, LocalMessage, LocalQuery, LocalResponse, ThreadRoutingTable};
 
 mod chord;
 use chord::{FingerTable, chord_manager_loop};
@@ -73,67 +73,130 @@ async fn main() {
 
     // let query_table = Arc::new(Mutex::new(HashMap<))
 
-    let mut query_table: QueryTable = QueryTable::new();
+    let mut thread_routing_table: ThreadRoutingTable = ThreadRoutingTable::new();
 
-    // these will be initialized by bootstrap
-    let successors: Vec<CortexNode>;
-    let predecessor: CortexNode;
+    // these will be initialized by bootstrap so these are just placeholders
+    let successors: Vec<CortexNode> = vec![];
+    let predecessor: CortexNode = CortexNode {dht_id: 0, socket: SocketAddr::new(local_ip_address::local_ip().unwrap(), 0)}; // placeholder
     let finger_table: FingerTable;
 
     // Create thread communication channel
 
     // This one lets all threads send queries to the dispatcher, dispatcher will receive them on rcv_query_channel
-    let (send_query_channel, mut rcv_query_channel): (mpsc::Sender<DispatcherQuery>, mpsc::Receiver<DispatcherQuery>) = mpsc::channel(256);
+    let (to_dispatcher_channel, mut from_worker_threads_channel): (mpsc::Sender<LocalMessage>, mpsc::Receiver<LocalMessage>) = mpsc::channel(256);
 
     // This type of of channel will have to be created for each worker thread
     // This one is just a prototype
-    let (send_res_channel, recv_res_channel): (oneshot::Sender<DispatcherResponse>, oneshot::Receiver<DispatcherResponse>) = oneshot::channel();
+    let (send_res_channel, recv_res_channel): (oneshot::Sender<LocalMessage>, oneshot::Receiver<LocalMessage>) = oneshot::channel();
 
     // Create worker threads
-    let send_query_channel_chord_manager = send_query_channel.clone();
+    let channel_for_chord_manager = to_dispatcher_channel.clone();
     let chord_manager_thread_handler = tokio::spawn(async {
-        chord_manager_loop(send_query_channel_chord_manager);
+        chord_manager_loop(channel_for_chord_manager);
     });
 
 
     // Main loop
     loop {
         /* main loop steps
-            1. receive DispatcherQueries from worker threads
-            2. update query_table accordingly
-            3. construct CortexMessages
-            4. send CortexMessges
-            5. receive CortexMessages
-            6. parse into responses for worker threads
-            7. deliver responses to worker threads
-            8. wait a brief heartbeat period
-         */
+            UPDATED VERSION
+            1. Receive (both queries and responses)
+                - from worker threads
+                - from network
+
+                    - this happens on mpsc recv side
+            2. Update
+                - add queries to table
+                - build outgoing messages out of queries/responses from worker threads
+            3. Send
+                - Send queries/responses from network to worker threads
+                - send network messages to their destinations
+
+            this means the mpsc channels for the dispatcher to receive on remains
+
+        */
+
+        // RECEIVE
+
+        // receive messages from worker threads
+        let mut incoming_worker_thread_msgs: Vec<LocalMessage> = vec![];
+        from_worker_threads_channel.recv_many(&mut incoming_worker_thread_msgs, 32).await;
+
+        // separate worker thread messages into queries and responses
+        let (local_queries, local_responses) = parse_worker_thread_messages(incoming_worker_thread_msgs);
+
+        // receive messages from the network
+        let mut incoming_network_msgs: Vec<NetworkMessage> = vec![]; // placeholder, will be populated by streams in the future
+        let (network_queries, network_responses) = parse_network_messages(&mut incoming_network_msgs);
+
+        // UPDATE
+        thread_routing_table.add_from_worker_queries(local_queries);
+        
+
+
+        // map of destination to outgoing message
+        let mut outgoing_messages: HashMap<u128, NetworkMessage> = HashMap::new();
+
+
+        // for query in incoming_worker_thread_msgs {
+        //     if thread_routing_table.contains(query.query_id) {
+        //         // for debugging purposes
+        //         println!("For some reason a query_id was already in the query table. This shouldn't happen");
+        //     } else {
+        //         // normal case
+
+        //         // if a response is required, add it to the query table
+        //         if let Some(send_response_channel) = query.opt_send_response_channel {
+        //             thread_routing_table.add_entry(query.query_id, send_response_channel);
+        //         }
+
+        //         // add the message to the relevant CortexMessages
+        //         match query.dst {
+        //             DestinationType::Successors => {
+        //                 for successor in &successors {
+        //                     if let Some(out_msg) = outgoing_messages.get_mut(&successor.dht_id) {
+        //                         out_msg.add_query(NetworkQuery::new(query.query_id, query.cmd));
+        //                     } else {
+        //                         // CortexMessage was not in hash table yet, create and add
+        //                         let mut out_msg = NetworkMessage::new();
+        //                         out_msg.add_query(NetworkQuery::new(query.query_id, query.cmd));
+        //                         outgoing_messages.insert(successor.dht_id, out_msg);
+        //                     }
+        //                 }
+        //             }
+        //             DestinationType::Predecessor => {
+        //                 if let Some(out_msg) = outgoing_messages.get_mut(&predecessor.dht_id) {
+        //                     out_msg.add_query(NetworkQuery::new(query.query_id, query.cmd));
+        //                 } else {
+        //                     // CortexMessage was not in hash table yet, create and add
+        //                     let mut out_msg = NetworkMessage::new();
+        //                     out_msg.add_query(NetworkQuery::new(query.query_id, query.cmd));
+        //                     outgoing_messages.insert(predecessor.dht_id, out_msg);
+        //                 }
+        //             }
+        //             DestinationType::Single(target_node) => {
+        //                 if let Some(out_msg) = outgoing_messages.get_mut(&target_node.dht_id) {
+        //                     out_msg.add_query(NetworkQuery::new(query.query_id, query.cmd));
+        //                 } else {
+        //                     // CortexMessage was not in hash table yet, create and add
+        //                     let mut out_msg = NetworkMessage::new();
+        //                     out_msg.add_query(NetworkQuery::new(query.query_id, query.cmd));
+        //                     outgoing_messages.insert(target_node.dht_id, out_msg);
+        //                 }
+        //             }
+        //         }
+
+        //     }
+        // }
 
 
 
-        // receive DispatcherQueries from worker threads
-        let mut fresh_queries: Vec<DispatcherQuery> = vec![];
-        rcv_query_channel.recv_many(&mut fresh_queries, 32).await;
-
-        // update query_table and construct CortexMessage
-        let outgoing_message = CortexMessage::new();
-        for query in fresh_queries {
-            if query_table.contains(query.query_id) {
-                // for debugging purposes
-                println!("For some reason a query_id was already in the query table. This shouldn't happen");
-            } else {
-                // normal case
-                query_table.add_entry(query.query_id, query.send_response_channel);
-            }
-        }
-
-        // Logging off for now
-        // YOU NEED A WAY TO HANDLE RESPONSES TOO, HOW ARE THESE QUERIES ACTUALLY GOING TO BE HANDLED?
+        // I think it would better if this actually happened first
 
 
 
 
-        let mut fresh_responses: Vec<DispatcherResponse> = vec![];
+        let mut fresh_responses: Vec<LocalResponse> = vec![];
 
     }
 
